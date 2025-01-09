@@ -2,7 +2,7 @@
 # name: vllm
 # group: vlm
 # config: config.py
-# depends: [transformers, torchaudio, openai-triton]
+# depends: [transformers, torchaudio, triton]
 # requires: '>=34.1.0'
 # test: test.py
 # notes: https://github.com/vllm-project/vllm
@@ -12,6 +12,9 @@ FROM ${BASE_IMAGE}
 
 ARG VLLM_VERSION \
     FORCE_BUILD=off
+
+RUN apt-get update -y && apt-get install -y libnuma-dev \
+    libsndfile1 libsndfile1-dev libprotobuf-dev libsm6 libxext6 libgl1
 
 COPY build.sh install.sh patches /tmp/vllm/
 

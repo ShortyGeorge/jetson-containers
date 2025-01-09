@@ -15,28 +15,33 @@ ln -s /usr/bin/clang-8 /usr/bin/clang
 ln -s /usr/bin/clang++-8 /usr/bin/clang++
 
 # build from source
-git clone --branch "v${PYTORCH_BUILD_VERSION}" --depth=1 --recursive https://github.com/pytorch/pytorch /opt/pytorch
+git clone --branch "v${PYTORCH_BUILD_VERSION}" --depth=1 --recursive https://github.com/pytorch/pytorch /opt/pytorch ||
+git clone --depth=1 --recursive https://github.com/pytorch/pytorch /opt/pytorch
 cd /opt/pytorch
 
 # https://github.com/pytorch/pytorch/issues/138333
-# CPUINFO_PATCH=third_party/cpuinfo/src/arm/linux/aarch64-isa.c
-# sed -i 's|cpuinfo_log_error|cpuinfo_log_warning|' ${CPUINFO_PATCH}
-# grep 'PR_SVE_GET_VL' ${CPUINFO_PATCH}
-# tail -20 ${CPUINFO_PATCH}
+CPUINFO_PATCH=third_party/cpuinfo/src/arm/linux/aarch64-isa.c
+sed -i 's|cpuinfo_log_error|cpuinfo_log_warning|' ${CPUINFO_PATCH}
+grep 'PR_SVE_GET_VL' ${CPUINFO_PATCH} || echo "patched ${CPUINFO_PATCH}"
+tail -20 ${CPUINFO_PATCH}
 
-# Apply patches for CUDA thread limits and ARM NEON vectorization
-# 1. Patch vec256_float_neon.h
-sed -i '/\/\/ Most likely we will do aarch32 support with inline asm\./,/#if defined(__aarch64__)/c\// Most likely we will do aarch32 support with inline asm.\n#if defined(__aarch64__)\n#if defined(__clang__) ||(__GNUC__ > 8 || (__GNUC__ == 8 && __GNUC_MINOR__ > 3))' \
-    aten/src/ATen/cpu/vec/vec256/vec256_float_neon.h
-sed -i '/#error "Big endian is not supported."/a\#endif //defined(__clang__)' \
-    aten/src/ATen/cpu/vec/vec256/vec256_float_neon.h
+if [[ "$PYTORCH_VERSION" == 1.13* ]]; then
+    echo "Applying patches for PyTorch 1.13..."
 
-# Reduce max threads per block
-sed -i '/device_properties\[device_index\] = device_prop;/i \ \ device_prop.maxThreadsPerBlock = device_prop.maxThreadsPerBlock / 2;' \
-    aten/src/ATen/cuda/CUDAContext.cpp
+    # Apply patches for CUDA thread limits and ARM NEON vectorization
+    # 1. Patch vec256_float_neon.h
+    sed -i '/\/\/ Most likely we will do aarch32 support with inline asm\./,/#if defined(__aarch64__)/c\// Most likely we will do aarch32 support with inline asm.\n#if defined(__aarch64__)\n#if defined(__clang__) ||(__GNUC__ > 8 || (__GNUC__ == 8 && __GNUC_MINOR__ > 3))' \
+        aten/src/ATen/cpu/vec/vec256/vec256_float_neon.h
+    sed -i '/#error "Big endian is not supported."/a\#endif //defined(__clang__)' \
+        aten/src/ATen/cpu/vec/vec256/vec256_float_neon.h
 
-# Fix CUDA thread limits for Jetson
-sed -i 's/1024/512/g' aten/src/ATen/cuda/detail/KernelUtils.h
+    # Reduce max threads per block
+    sed -i '/device_properties\[device_index\] = device_prop;/i \ \ device_prop.maxThreadsPerBlock = device_prop.maxThreadsPerBlock / 2;' \
+        aten/src/ATen/cuda/CUDAContext.cpp
+
+    # Fix CUDA thread limits for Jetson
+    sed -i 's/1024/512/g' aten/src/ATen/cuda/detail/KernelUtils.h
+fi
 
 pip3 install --no-cache-dir --index-url https://pypi.org/simple -r requirements.txt
 pip3 install --no-cache-dir --index-url https://pypi.org/simple \
