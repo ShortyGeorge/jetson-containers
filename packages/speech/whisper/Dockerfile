@@ -1,8 +1,8 @@
 #---
 # name: whisper
 # group: audio
-# depends: [numba, numpy, pytorch, torchaudio, jupyterlab]
-# requires: '>=34.1.0'
+# depends: [pytorch, torchaudio, jupyterlab]
+# requires: '>=32.7.5'
 # docs: docs.md
 #---
 ARG BASE_IMAGE
@@ -16,7 +16,7 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-RUN pip3 install --no-cache-dir --verbose pandas scipy jiwer ipywebrtc
+RUN pip3 install --index-url https://pypi.org/simple --no-cache-dir --verbose pandas scipy jiwer ipywebrtc
 
 ADD https://api.github.com/repos/openai/whisper/git/refs/heads/main /tmp/whisper_version.json
 
@@ -27,11 +27,11 @@ RUN git clone https://github.com/openai/whisper/ && \
     sed 's|^numpy.*||' -i requirements.txt && \
     sed 's|^torch.*||' -i requirements.txt && \
     cat requirements.txt && \
-    pip3 wheel --wheel-dir=dist --no-deps --verbose .
+    pip3 wheel --index-url https://pypi.org/simple --wheel-dir=dist --no-deps --verbose .
 
 RUN cp whisper/dist/openai_whisper*.whl /opt && \
-    pip3 install --no-cache-dir --verbose /opt/openai_whisper*.whl
-    
+    pip3 install --index-url https://pypi.org/simple --no-cache-dir --verbose /opt/openai_whisper*.whl
+
 WORKDIR /opt/whisper/
 
 COPY record-and-transcribe.ipynb /opt/whisper/notebooks

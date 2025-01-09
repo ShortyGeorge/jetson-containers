@@ -1,0 +1,42 @@
+# Dockerfile.custom
+#---
+# name: tensorrt
+# group: cuda
+# depends: [cuda, cudnn, python, cmake]
+# test: test.sh
+#---
+
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+# Set up external dependencies directory
+ENV EXT_PATH=/workspace/external
+RUN mkdir -p ${EXT_PATH}
+
+# Download pybind11
+RUN cd ${EXT_PATH} && \
+    git clone https://github.com/pybind/pybind11.git
+
+# Copy Python headers
+RUN mkdir -p ${EXT_PATH}/python3.8/include && \
+    cp -r /usr/include/python3.8/* ${EXT_PATH}/python3.8/include/
+
+# Clone TensorRT
+RUN git clone -b release/8.2 https://github.com/NVIDIA/TensorRT.git /workspace/TensorRT && \
+    cd /workspace/TensorRT && \
+    git submodule update --init --recursive
+
+
+# Build Python bindings
+WORKDIR /workspace/TensorRT/python
+RUN PYTHON_MAJOR_VERSION=3 PYTHON_MINOR_VERSION=8 TARGET_ARCHITECTURE=aarch64 bash ./build.sh
+RUN ls -l build/dist
+
+# Install the Python wheel
+RUN pip3 install build/dist/tensorrt-*.whl
+
+# Verify installation
+RUN python3 -c "import tensorrt; print('TensorRT version:', tensorrt.__version__)"
+
+# Cleanup (optional)
+RUN rm -rf /workspace/TensorRT /workspace/external

@@ -17,4 +17,4 @@ else:
     elif L4T_VERSION.major >= 34:
         PYTORCH_VERSION = Version('2.2')      # JetPack 5.1 (CUDA 11.4)
     elif L4T_VERSION.major >= 32:
-        PYTORCH_VERSION = Version('1.10')     # JetPack 4.6 (CUDA 10.2)
+        PYTORCH_VERSION = Version('1.13')     # JetPack 4.6 (CUDA 10.2)

@@ -1,0 +1,3 @@
+[console_scripts]
+autotag = jetson_containers.tag:main
+

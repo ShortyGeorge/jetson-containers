@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Python installer
+unset PIP_INDEX_URL
+unset PIP_EXTRA_INDEX_URL
+export PIP_CONFIG_FILE=/dev/null
 set -x
 
 apt-get update
@@ -47,8 +50,7 @@ pip3 install --upgrade --no-cache-dir \
    setuptools \
    packaging \
    'Cython<3' \
-   wheel 
+   wheel
 
 pip3 install --upgrade --no-cache-dir --index-url https://pypi.org/simple \
    twine
-   

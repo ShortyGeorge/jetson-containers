@@ -9,7 +9,7 @@ ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
 RUN set -ex \
-    && pip3 install --upgrade --force-reinstall --no-cache-dir --verbose cmake \
+    && pip3 install --upgrade --force-reinstall --no-cache-dir --index-url https://pypi.org/simple --verbose cmake \
     \
     && cmake --version \
     && which cmake

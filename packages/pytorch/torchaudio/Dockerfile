@@ -13,4 +13,8 @@ ARG TORCHAUDIO_VERSION \
 
 COPY install.sh build.sh /tmp/torchaudio/
 
-RUN /tmp/torchaudio/install.sh || /tmp/torchaudio/build.sh
+ENV LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1
+ENV STACK_SIZE=65536
+
+RUN ulimit -s 65536 && \
+    /tmp/torchaudio/install.sh || /tmp/torchaudio/build.sh
